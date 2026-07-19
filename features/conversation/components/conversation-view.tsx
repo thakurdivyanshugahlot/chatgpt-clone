@@ -10,33 +10,37 @@ import { queryKeys } from '../utils/query-keys';
 import { toast } from 'sonner';
 
 import { ChatEmpty } from './chat-empty';
-import { ChatMessages } from './char-messages';
+import { ChatMessages } from './chat-messages';
 import { ChatComposer } from './chat-composer';
+import { BranchSwitcher } from './branch-switcher';
 
 type ConversationViewProps = {
     conversationId: string;
+    branchId: string;
     initialMessages: UIMessage[];
 };   
 
 /**
  * Main chat view — header, message list (or empty state), and composer with streaming.
  */
-export const ConversationView = ({ conversationId, initialMessages }: ConversationViewProps) => {
+export const ConversationView = ({ conversationId, branchId, initialMessages }: ConversationViewProps) => {
 
     const queryClient = useQueryClient();
     const { data: conversations } = useConversations();
 
     const transport = useMemo(() => new DefaultChatTransport({
         api: "/api/chat",
-        prepareSendMessagesRequest: ({ id, messages }) => ({
+        // Note: don't use the destructured `id` here — that's useChat's internal
+        // session id (`${conversationId}:${branchId}`), not the real conversation id.
+        prepareSendMessagesRequest: ({ messages }) => ({
             body: {
-                id, message: messages.at(-1)
+                id: conversationId, branchId, message: messages.at(-1)
             }
         })
-    }), []);
+    }), [conversationId, branchId]);
 
     const { messages, sendMessage, status } = useChat({
-        id: conversationId,
+        id: `${conversationId}:${branchId}`,
         messages: initialMessages,
         transport,
         onFinish: () => {
@@ -56,13 +60,14 @@ export const ConversationView = ({ conversationId, initialMessages }: Conversati
             <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
                 <SidebarTrigger />
                 <Separator orientation="vertical" className="mx-1 h-4" />
-                <h1 className="truncate text-sm font-medium">{title}</h1>
+                <h1 className="flex-1 truncate text-sm font-medium">{title}</h1>
+                <BranchSwitcher conversationId={conversationId} activeBranchId={branchId} />
             </header>
 
             {messages.length === 0 ? (
                 <ChatEmpty />
             ) : (
-                <ChatMessages messages={messages} status={status} />
+                <ChatMessages messages={messages} status={status} conversationId={conversationId} />
             )}
 
             <ChatComposer

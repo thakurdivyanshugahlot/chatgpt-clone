@@ -37,7 +37,7 @@
 import { google } from "@ai-sdk/google";
 
 /** Default Gemini model used when a conversation has no model override. */
-export const DEFAULT_CHAT_MODEL = "gemini-2.5-flash";
+export const DEFAULT_CHAT_MODEL = "gemini-flash-latest";
 
 /**
  * Returns a Gemini language model instance for chat completions.

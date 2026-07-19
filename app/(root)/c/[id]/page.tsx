@@ -1,4 +1,4 @@
-import { loadChatMessages } from "@/features/ai/actions/chat-store";
+import { loadChatMessages, resolveActiveBranch } from "@/features/ai/actions/chat-store";
 import { getConversation } from "@/features/conversation/actions/conversation-actions";
 import { ConversationView } from "@/features/conversation/components/conversation-view";
 import { notFound } from "next/navigation";
@@ -17,12 +17,14 @@ const page = async ({ params }: ConversationPageProps) => {
     notFound()
   }
 
-  const initialMessages = await loadChatMessages(id);
-  
+  const activeBranch = await resolveActiveBranch(id);
+  const initialMessages = await loadChatMessages(id, activeBranch.id);
+
   return(
     <ConversationView
-    key={id}
+    key={`${id}:${activeBranch.id}`}
     conversationId={id}
+    branchId={activeBranch.id}
     initialMessages={initialMessages}
     />
   )  
